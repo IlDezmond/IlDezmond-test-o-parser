@@ -18,5 +18,6 @@ class Product(models.Model):
     discount = models.CharField(
         verbose_name='Скидка',
         max_length=100,
-        null=True
+        null=True,
+        blank=True
     )
