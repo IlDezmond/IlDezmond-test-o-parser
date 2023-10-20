@@ -1,0 +1,70 @@
+services:
+  flaresolver:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: ozon-flaresolverr
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=Europe/London
+    restart: unless-stopped
+
+  ozon-mysql:
+    image: mysql:8.1.0
+    container_name: ozon-mysql
+    command: --default-authentication-plugin=caching_sha2_password
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  parser-backend:
+    build:
+      context:
+        ../src/ozon_parser/
+      dockerfile: Dockerfile
+    depends_on:
+      - flaresolver
+      - ozon-mysql
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    entrypoint:
+      - /entrypoint.sh
+    restart: unless-stopped
+
+  bot:
+    build:
+      context:
+        ../src/bot/
+      dockerfile: Dockerfile
+    depends_on:
+      - flaresolver
+      - ozon-mysql
+    env_file:
+      - .env
+    restart: unless-stopped
+    command: python bot_app.py
+
+  ozon-redis:
+    image: redis:alpine
+    restart: always
+
+  celery:
+    build:
+      context:
+        ../src/ozon_parser/
+      dockerfile: Dockerfile
+    depends_on:
+      - flaresolver
+      - ozon-mysql
+      - parser-backend
+    env_file:
+      - .env
+    command: python -m celery -A ozon_parser worker --loglevel=info --concurrency 4
+    restart: on-failure:2
+
+volumes:
+  mysql_data:

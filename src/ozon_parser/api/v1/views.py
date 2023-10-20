@@ -4,6 +4,7 @@ from rest_framework.serializers import Serializer
 
 from products.models import Product
 from .serializers import ProductReadSerializer, ProductWriteSerializer
+from parser.products_parser import parse_task
 
 
 class ProductViewSet(
@@ -23,7 +24,5 @@ class ProductViewSet(
         serializer: Serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         product_count = serializer.validated_data.get('products_count')
-        print(product_count)
-        # parse(product_count).delay()
+        parse_task.delay(product_count)
         return Response(status=status.HTTP_201_CREATED)
-
