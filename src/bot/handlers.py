@@ -5,7 +5,6 @@ import aiohttp
 from aiogram import F, Router
 
 BACKEND_URL = 'http://parser-backend:8000/api/v1/products/'
-# BACKEND_URL = 'http://127.0.0.1:8000/api/v1/products/'
 
 router = Router()
 
@@ -28,13 +27,3 @@ async def list_products_handler(message):
     response = await get_products()
     text = make_products_message(response)
     await message.answer(text)
-
-
-async def main():
-    response = await get_products()
-    text = make_products_message(response)
-    print(text)
-
-
-if __name__ == '__main__':
-    asyncio.run(main())
